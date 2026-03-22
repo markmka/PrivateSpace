@@ -19,8 +19,8 @@
 |------|------|
 | 离线存储 | 所有数据本地加密存储，不上传第三方服务器 |
 | iCloud 同步 | 通过 CloudKit 在用户 Apple 设备间自动同步 |
-| 生物识别解锁 | Face ID / Touch ID 解锁为主 |
-| Master Password | 可选主密码作为备份或强制使用 |
+| 生物识别解锁 | Face ID / Touch ID 解锁为主，需先设置 Master Password |
+| Master Password | 必填，用于派生加密密钥；启用生物识别后可使用 Face ID 解锁 |
 | 自定义字段 | 每种类型支持自由添加任意字段 |
 | 自定义类型 | 用户可创建新的条目类型 |
 | 剪贴板安全 | 复制敏感内容后 30 秒自动清除 |
@@ -168,8 +168,9 @@ class VaultItem {
 class CustomField {
     var id: UUID
     var name: String
-    var encryptedValue: Data  // 敏感内容加密存储
-    var isSecret: Bool        // true 时默认隐藏值
+    var value: String           // 非敏感字段存储明文
+    var encryptedValue: Data?  // 敏感字段（isSecret=true）加密后存储
+    var isSecret: Bool         // true 时默认隐藏值并加密存储
 }
 
 @Model
@@ -223,9 +224,11 @@ enum ItemType: String, Codable, CaseIterable {
 
 **首次使用设置流程（First-Time Setup）：**
 1. 用户首次打开 App，显示欢迎页
-2. 引导用户设置 Master Password（必填）
-3. 可选：启用 Face ID / Touch ID
-4. 设置完成，进入主列表页（空状态）
+2. 引导用户设置 Master Password（必填，8位以上）
+3. Master Password 确认输入（防止输入错误）
+4. 从 Master Password 派生加密密钥（PBKDF2），存入 iOS Keychain
+5. 可选：启用 Face ID / Touch ID（生物识别关联 Keychain 中的密钥）
+6. 设置完成，进入主列表页（空状态）
 
 **常规解锁流程：**
 ```
@@ -250,7 +253,7 @@ Master Password 验证失败 → 显示错误，重试
 - 使用 **SwiftData + CloudKit** 原生集成
 - CloudKit 在传输层和服务器端提供加密（AES-256），Apple 作为信任方持有密钥
 - SwiftData 将数据序列化后通过 CloudKit 同步，敏感字段已在本地用 AES-GCM 加密（见 4.1），CloudKit 同步的是加密后的数据块
-- 同步冲突策略：**最后写入优先**（Last-Write-Wins），基于 `modifiedAt` 时间戳
+- 同步冲突策略：SwiftData + CloudKit 原生处理，基于各记录的系统元数据（含 vector clock）
 - 用户登录同一 Apple ID 即可在不同设备间自动同步
 - 离线时本地操作，恢复网络后自动合并
 
@@ -261,8 +264,20 @@ Master Password 验证失败 → 显示错误，重试
 
 ### 4.5 自动锁定
 
-- 用户离开 app（进入后台）立即锁定
+- 用户离开 app（进入后台）立即锁定（`scenePhase == .background` 时触发）
 - 可配置：立即 / 1分钟 / 5分钟
+
+### 4.6 Master Password 恢复与更改
+
+**密码遗忘处理：**
+- 由于加密密钥由 Master Password 派生且不备份，**遗忘 Master Password 将导致无法解密现有数据**
+- 用户遗忘密码后，只能删除 App 重新开始（数据丢失）
+- 未来版本可考虑提供密码提示或恢复密钥功能
+
+**密码更改流程：**
+- 用户在设置页修改 Master Password
+- 系统用新密码重新派生密钥，遍历所有条目重新加密敏感字段
+- 此操作不可逆，需用户确认
 
 ---
 
