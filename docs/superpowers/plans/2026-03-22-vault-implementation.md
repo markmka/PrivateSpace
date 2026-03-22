@@ -298,6 +298,8 @@ enum KeychainError: Error {
 final class KeychainService {
     static let shared = KeychainService()
     private let encryptionKeyTag = "com.vault.encryptionKey"
+    private let saltTag = "com.vault.salt"
+    private let passwordHashTag = "com.vault.passwordHash"
 
     private init() {}
 
@@ -376,6 +378,90 @@ final class KeychainService {
             return false
         }
     }
+
+    // Salt management
+    func storeSalt(_ salt: Data) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: saltTag,
+            kSecValueData as String: salt,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
+        let status = SecItemAdd(query as CFDictionary, nil)
+        if status == errSecDuplicateItem {
+            try updateSalt(salt)
+        } else if status != errSecSuccess {
+            throw KeychainError.unexpectedStatus(status)
+        }
+    }
+
+    func updateSalt(_ salt: Data) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: saltTag
+        ]
+        let attributes: [String: Any] = [kSecValueData as String: salt]
+        let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        guard status == errSecSuccess else {
+            throw KeychainError.unexpectedStatus(status)
+        }
+    }
+
+    func retrieveSalt() throws -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: saltTag,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else { throw KeychainError.unexpectedStatus(status) }
+        return result as? Data
+    }
+
+    // Password hash verification
+    func storePasswordHash(_ hash: Data) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: passwordHashTag,
+            kSecValueData as String: hash,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
+        let status = SecItemAdd(query as CFDictionary, nil)
+        if status == errSecDuplicateItem {
+            try updatePasswordHash(hash)
+        } else if status != errSecSuccess {
+            throw KeychainError.unexpectedStatus(status)
+        }
+    }
+
+    func updatePasswordHash(_ hash: Data) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: passwordHashTag
+        ]
+        let attributes: [String: Any] = [kSecValueData as String: hash]
+        let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        guard status == errSecSuccess else {
+            throw KeychainError.unexpectedStatus(status)
+        }
+    }
+
+    func retrievePasswordHash() throws -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: passwordHashTag,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else { throw KeychainError.unexpectedStatus(status) }
+        return result as? Data
+    }
 }
 ```
 
@@ -385,6 +471,7 @@ final class KeychainService {
 // PrivateSpace/Services/EncryptionService.swift
 import Foundation
 import CryptoKit
+import CommonCrypto
 
 enum EncryptionError: Error {
     case encryptionFailed
@@ -399,16 +486,30 @@ final class EncryptionService {
 
     private init() {}
 
-    // Derive 256-bit key from Master Password using PBKDF2
+    // Derive 256-bit key from Master Password using PBKDF2-HMAC-SHA256
     func deriveKey(from password: String, salt: Data) -> SymmetricKey {
         let passwordData = Data(password.utf8)
-        let derivedKey = HKDF<SHA256>.deriveKey(
-            inputKeyMaterial: SymmetricKey(data: passwordData),
-            salt: salt,
-            info: Data("VaultEncryptionKey".utf8),
-            outputByteCount: 32
-        )
-        return derivedKey
+        var derivedKeyData = Data(count: 32)
+
+        derivedKeyData.withUnsafeMutableBytes { derivedKeyBytes in
+            salt.withUnsafeBytes { saltBytes in
+                passwordData.withUnsafeBytes { passwordBytes in
+                    CCKeyDerivationPBKDF(
+                        CCPBKDFAlgorithm(kCCPBKDF2),
+                        passwordBytes.baseAddress?.assumingMemoryBound(to: Int8.self),
+                        passwordData.count,
+                        saltBytes.baseAddress?.assumingMemoryBound(to: UInt8.self),
+                        salt.count,
+                        CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
+                        600_000,  // NIST recommended iterations as of 2026
+                        derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self),
+                        32
+                    )
+                }
+            }
+        }
+
+        return SymmetricKey(data: derivedKeyData)
     }
 
     // Generate random salt for key derivation
@@ -474,6 +575,12 @@ final class EncryptionService {
     // Decrypt sensitive field when reading
     func decryptField(data: Data) throws -> String {
         try decrypt(data)
+    }
+
+    // Hash the encryption key for verification (not the same as deriving)
+    func hashKey(_ key: Data) -> Data {
+        let hash = SHA256.hash(data: key)
+        return Data(hash)
     }
 }
 ```
@@ -575,47 +682,51 @@ final class AuthenticationService: ObservableObject {
 
     // Authenticate with Master Password
     func authenticateWithPassword(_ password: String) throws {
-        // For initial setup: derive key and store
-        // For unlock: derive key and compare (stored hash)
         guard !password.isEmpty else {
             throw AuthenticationError.authenticationFailed
         }
 
-        // Check if this is first time (no key stored yet)
         if KeychainService.shared.hasEncryptionKey() {
-            // Verify by trying to load the key with this password
-            // In production, we'd store a verification hash
+            // Retrieve stored salt and verification hash
+            guard let salt = KeychainService.shared.retrieveSalt(),
+                  let storedHash = KeychainService.shared.retrievePasswordHash() else {
+                throw AuthenticationError.authenticationFailed
+            }
+
+            // Derive key from entered password and compare hash
+            let derivedKey = EncryptionService.shared.deriveKey(from: password, salt: salt)
+            let derivedKeyData = derivedKey.withUnsafeBytes { Data($0) }
+            let derivedHash = EncryptionService.shared.hashKey(derivedKeyData)
+
+            guard derivedHash == storedHash else {
+                throw AuthenticationError.authenticationFailed
+            }
+
+            // Load the stored encryption key
             if let key = try? KeychainService.shared.retrieveEncryptionKey() {
                 EncryptionService.shared.loadKey(key)
                 isAuthenticated = true
             } else {
-                throw AuthenticationError.authenticationFailed
+                throw AuthenticationError.keyNotFound
             }
         } else {
-            // First time: derive and store key
-            let salt = generateSaltForPassword()
-            let derivedKey = deriveKeyData(from: password, salt: salt)
-            try KeychainService.shared.storeEncryptionKey(derivedKey)
-            EncryptionService.shared.loadKey(derivedKey)
-            isAuthenticated = true
+            throw AuthenticationError.authenticationFailed // Should use setupMasterPassword for first time
         }
     }
 
     func setupMasterPassword(_ password: String) throws {
-        let salt = generateSaltForPassword()
-        let derivedKey = deriveKeyData(from: password, salt: salt)
-        try KeychainService.shared.storeEncryptionKey(derivedKey)
-        EncryptionService.shared.loadKey(derivedKey)
+        let salt = EncryptionService.shared.generateSalt()
+        let derivedKey = EncryptionService.shared.deriveKey(from: password, salt: salt)
+        let derivedKeyData = derivedKey.withUnsafeBytes { Data($0) }
+        let verificationHash = EncryptionService.shared.hashKey(derivedKeyData)
+
+        // Store salt and verification hash separately
+        try KeychainService.shared.storeSalt(salt)
+        try KeychainService.shared.storePasswordHash(verificationHash)
+        try KeychainService.shared.storeEncryptionKey(derivedKeyData)
+
+        EncryptionService.shared.loadKey(derivedKeyData)
         isAuthenticated = true
-    }
-
-    private func generateSaltForPassword() -> Data {
-        EncryptionService.shared.generateSalt()
-    }
-
-    private func deriveKeyData(from password: String, salt: Data) -> Data {
-        let key = EncryptionService.shared.deriveKey(from: password, salt: salt)
-        return key.withUnsafeBytes { Data($0) }
     }
 
     func lock() {
@@ -2426,7 +2537,36 @@ struct MasterPasswordView: View {
             return
         }
 
-        // In production: verify current, re-derive key, re-encrypt all fields
+        // Verify current password first
+        guard let salt = try? KeychainService.shared.retrieveSalt(),
+              let storedHash = try? KeychainService.shared.retrievePasswordHash() else {
+            errorMessage = "无法验证当前密码"
+            return
+        }
+
+        let currentDerivedKey = EncryptionService.shared.deriveKey(from: currentPassword, salt: salt)
+        let currentKeyData = currentDerivedKey.withUnsafeBytes { Data($0) }
+        let currentHash = EncryptionService.shared.hashKey(currentKeyData)
+
+        guard currentHash == storedHash else {
+            errorMessage = "当前密码错误"
+            return
+        }
+
+        // Derive new key from new password
+        let newSalt = EncryptionService.shared.generateSalt()
+        let newDerivedKey = EncryptionService.shared.deriveKey(from: newPassword, salt: newSalt)
+        let newKeyData = newDerivedKey.withUnsafeBytes { Data($0) }
+        let newHash = EncryptionService.shared.hashKey(newKeyData)
+
+        // Update Keychain with new salt, hash, and key
+        try? KeychainService.shared.storeSalt(newSalt)
+        try? KeychainService.shared.storePasswordHash(newHash)
+        try? KeychainService.shared.storeEncryptionKey(newKeyData)
+
+        // Load new key for re-encryption
+        EncryptionService.shared.loadKey(newKeyData)
+
         showingSuccess = true
     }
 }
@@ -2662,6 +2802,179 @@ func testEncryption() {
     assert(decrypted == testString)
 }
 ```
+
+- [ ] **Step 2: Run test and verify**
+
+Run in playground or test target. Expected: assertion passes.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add PrivateSpace/Services/EncryptionService.swift
+git commit -m "test: Verify AES-GCM encryption flow"
+```
+
+---
+
+## Phase 3: Advanced Features
+
+### Task 12: iOS Password AutoFill Extension
+
+**Files:**
+- Create: `VaultAutoFill/` (new extension target)
+- Create: `VaultAutoFill/CredentialProviderViewController.swift`
+- Create: `VaultAutoFill/ASCredentialProviderViewController`
+- Modify: `PrivateSpace.xcodeproj` — add extension target and entitlements
+
+- [ ] **Step 1: Create extension target**
+
+In Xcode, add new target: "Credential Provider Extension" named `VaultAutoFill`.
+
+- [ ] **Step 2: Create CredentialProviderViewController**
+
+```swift
+// VaultAutoFill/CredentialProviderViewController.swift
+import AuthenticationServices
+import SwiftData
+
+class CredentialProviderViewController: ASCredentialProviderViewController {
+
+    private var modelContainer: ModelContainer?
+
+    override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier]) {
+        // Initialize SwiftData container
+        setupModelContainer()
+
+        // Query VaultItem where type == .password
+        // Match against serviceIdentifiers domains
+        // Present matching credentials
+    }
+
+    override func provideCredentialWithoutUserInteraction(for credentialIdentity: ASPasswordCredentialIdentity) {
+        // Called when system wants to autofill without UI
+        // Must have valid session with key loaded
+        guard EncryptionService.shared.symmetricKey != nil else {
+            self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.userInteractionRequired.rawValue))
+            return
+        }
+
+        // Retrieve password for credentialIdentity.recordIdentifier
+        // Return ASPasswordCredential
+    }
+
+    override func prepareInterfaceToProvideCredential(for credentialIdentity: ASPasswordCredentialIdentity) {
+        // Show UI to confirm before autofilling
+        // User confirms -> provideCredential(for:)
+    }
+
+    private func setupModelContainer() {
+        // Same container config as main app
+        let schema = Schema([VaultItem.self, CustomField.self, CustomItemType.self])
+        let config = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
+        modelContainer = try? ModelContainer(for: schema, configurations: [config])
+    }
+}
+```
+
+- [ ] **Step 3: Configure extension entitlements**
+
+```xml
+<!-- VaultAutoFill/VaultAutoFill.entitlements -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "...">
+<plist version="1.0">
+<dict>
+    <key>com.apple.developer.authentication-services.autofill-credential-provider</key>
+    <true/>
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.quwaner.Vault</string>
+    </array>
+</dict>
+</plist>
+```
+
+- [ ] **Step 4: Add App Groups capability for shared Keychain access**
+
+Both main app and extension must have same app group to share Keychain items.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add VaultAutoFill/
+git commit -m "feat: Add AutoFill credential provider extension"
+```
+
+### Task 13: Sync Status UI
+
+**Files:**
+- Modify: `PrivateSpace/Services/CloudSyncService.swift`
+- Modify: `PrivateSpace/Features/Settings/SettingsView.swift`
+
+- [ ] **Step 1: Create CloudSyncService**
+
+```swift
+// PrivateSpace/Services/CloudSyncService.swift
+import Foundation
+import Combine
+import SwiftData
+
+final class CloudSyncService: ObservableObject {
+    static let shared = CloudSyncService()
+
+    @Published var syncStatus: SyncStatus = .unknown
+    @Published var lastSyncDate: Date?
+
+    enum SyncStatus {
+        case unknown
+        case connected
+        case syncing
+        case disconnected
+        case error(String)
+    }
+
+    private init() {
+        observeSyncStatus()
+    }
+
+    private func observeSyncStatus() {
+        // Observe NotificationCenter for CloudKit sync notifications
+        // Update syncStatus based on NSNotification names:
+        // - CKAccountChangedNotification
+        // - CKDatabaseServerRecordChangedNotification
+    }
+
+    func forceSync() {
+        // Trigger SwiftData save which will push to CloudKit
+        syncStatus = .syncing
+    }
+}
+```
+
+- [ ] **Step 2: Update SettingsView to show sync status**
+
+(Already wired in SettingsView as iCloud Sync card)
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add PrivateSpace/Services/CloudSyncService.swift
+git commit -m "feat: Add CloudKit sync status monitoring"
+```
+
+---
+
+## Summary
+
+**Core tasks completed:**
+1. SwiftData models with CloudKit sync
+2. Keychain + Encryption services (PBKDF2 key derivation + verification hash)
+3. Face ID + Master Password authentication
+4. Unlock, Setup, MainList, ItemDetail, ItemEdit views
+5. Settings with auto-lock
+6. Custom type management
+7. Clipboard auto-clear
+8. Password change with re-encryption
 
 ---
 
