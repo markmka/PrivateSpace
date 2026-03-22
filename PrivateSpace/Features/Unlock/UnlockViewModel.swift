@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import LocalAuthentication
 
 @MainActor
 final class UnlockViewModel: ObservableObject {
