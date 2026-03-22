@@ -114,7 +114,9 @@ final class AuthenticationService: ObservableObject {
             // Load the stored encryption key
             if let key = try? KeychainService.shared.retrieveEncryptionKey() {
                 EncryptionService.shared.loadKey(key)
-                isAuthenticated = true
+                await MainActor.run {
+                    self.isAuthenticated = true
+                }
             } else {
                 throw AuthenticationError.keyNotFound
             }

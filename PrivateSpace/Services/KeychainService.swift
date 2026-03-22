@@ -134,6 +134,18 @@ final class KeychainService {
         return result as? Data
     }
 
+    func deleteSalt() throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: saltTag
+        ]
+
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw KeychainError.unexpectedStatus(status)
+        }
+    }
+
     // Password hash verification
     func storePasswordHash(_ hash: Data) throws {
         let query: [String: Any] = [
@@ -174,5 +186,17 @@ final class KeychainService {
         if status == errSecItemNotFound { return nil }
         guard status == errSecSuccess else { throw KeychainError.unexpectedStatus(status) }
         return result as? Data
+    }
+
+    func deletePasswordHash() throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: passwordHashTag
+        ]
+
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw KeychainError.unexpectedStatus(status)
+        }
     }
 }

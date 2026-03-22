@@ -6,6 +6,7 @@ enum EncryptionError: Error {
     case encryptionFailed
     case decryptionFailed
     case invalidKey
+    case keyDerivationFailed
 }
 
 final class EncryptionService {
@@ -16,11 +17,11 @@ final class EncryptionService {
     private init() {}
 
     // Derive 256-bit key from Master Password using PBKDF2-HMAC-SHA256
-    func deriveKey(from password: String, salt: Data) -> SymmetricKey {
+    func deriveKey(from password: String, salt: Data) throws -> SymmetricKey {
         let passwordData = Data(password.utf8)
         var derivedKeyData = Data(count: 32)
 
-        derivedKeyData.withUnsafeMutableBytes { derivedKeyBytes in
+        let result = derivedKeyData.withUnsafeMutableBytes { derivedKeyBytes in
             salt.withUnsafeBytes { saltBytes in
                 passwordData.withUnsafeBytes { passwordBytes in
                     CCKeyDerivationPBKDF(
@@ -36,6 +37,10 @@ final class EncryptionService {
                     )
                 }
             }
+        }
+
+        guard result == kCCSuccess else {
+            throw EncryptionError.keyDerivationFailed
         }
 
         return SymmetricKey(data: derivedKeyData)
