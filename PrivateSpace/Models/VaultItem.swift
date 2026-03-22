@@ -7,16 +7,16 @@ final class VaultItem {
     var type: ItemType
     var title: String
     @Relationship(deleteRule: .cascade) var fields: [CustomField]
-    var customTypeId: UUID?    // For .custom type, reference to CustomItemType
+    var customType: CustomItemType?
     var createdAt: Date
     var modifiedAt: Date
 
-    init(id: UUID = UUID(), type: ItemType, title: String = "", fields: [CustomField] = [], customTypeId: UUID? = nil, createdAt: Date = Date(), modifiedAt: Date = Date()) {
+    init(id: UUID = UUID(), type: ItemType, title: String = "", fields: [CustomField] = [], customType: CustomItemType? = nil, createdAt: Date = Date(), modifiedAt: Date = Date()) {
         self.id = id
         self.type = type
         self.title = title
         self.fields = fields
-        self.customTypeId = customTypeId
+        self.customType = customType
         self.createdAt = createdAt
         self.modifiedAt = modifiedAt
     }
