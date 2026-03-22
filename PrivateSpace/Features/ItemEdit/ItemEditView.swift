@@ -37,10 +37,21 @@ struct ItemEditView: View {
                             .padding(.horizontal, AppSpacing.standardPadding)
 
                         VStack(spacing: 12) {
-                            ForEach(Array(viewModel.fields.enumerated()), id: \.element.id) { index, _ in
+                            ForEach(viewModel.fields) { field in
                                 FieldEditorRow(
-                                    field: $viewModel.fields[index],
-                                    onDelete: { viewModel.removeField(at: index) },
+                                    field: Binding(
+                                        get: { viewModel.fields.first(where: { $0.id == field.id })! },
+                                        set: { newValue in
+                                            if let index = viewModel.fields.firstIndex(where: { $0.id == field.id }) {
+                                                viewModel.fields[index] = newValue
+                                            }
+                                        }
+                                    ),
+                                    onDelete: {
+                                        if let index = viewModel.fields.firstIndex(where: { $0.id == field.id }) {
+                                            viewModel.removeField(at: index)
+                                        }
+                                    },
                                     canDelete: viewModel.fields.count > 1
                                 )
                             }
