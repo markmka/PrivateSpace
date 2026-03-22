@@ -125,9 +125,8 @@ App 分为以下主要界面：
 
 **安全设置分组：**
 - Face ID / Touch ID 开关
-- Master Password 管理（设置/修改）
+- Master Password 管理（设置/修改/删除）
 - 自动锁定策略（立即 / 1分钟 / 5分钟）
-- 剪贴板清除时间（30秒 / 1分钟 / 2分钟）
 
 **自定义类型分组：**
 - 管理已有自定义类型（列表）
@@ -212,35 +211,46 @@ enum ItemType: String, Codable, CaseIterable {
 
 ## 4. 安全模型
 
-### 4.1 本地加密
+### 4.1 本地加密与密钥管理
 
 - 敏感字段（密码、私钥等）使用 **CryptoKit AES-GCM** 加密后存储
-- 加密密钥由 Master Password 派生（PBKDF2）
-- 密钥存储在 **iOS Keychain**，本地验证，不上传
+- 加密密钥由 Master Password 派生（PBKDF2），生成 256-bit 对称密钥
+- 密钥存储在 **iOS Keychain**，保护级别 `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
+- **Face ID 解锁机制**：Face ID 成功后，从 Keychain 提取已存储的加密密钥到内存。用户必须先设置 Master Password，密钥派生后存入 Keychain（受生物识别保护）。之后 Face ID 解锁无需再次输入 Master Password。
+- Master Password 本身不上传，仅用于派生本地存储的密钥
 
 ### 4.2 解锁流程
 
+**首次使用设置流程（First-Time Setup）：**
+1. 用户首次打开 App，显示欢迎页
+2. 引导用户设置 Master Password（必填）
+3. 可选：启用 Face ID / Touch ID
+4. 设置完成，进入主列表页（空状态）
+
+**常规解锁流程：**
 ```
 App 启动
     ↓
-检测生物识别可用性
+检测生物识别可用性 + 是否已启用
     ↓
-可用 → 显示 Face ID 按钮
-不可用 → 跳过生物识别
+可用且已启用 → 显示 Face ID 按钮
+不可用或未启用 → 跳过生物识别
     ↓
-用户触发解锁
+用户触发解锁（点击 Face ID 或跳过）
     ↓
-生物识别成功 → 解锁 App
-生物识别失败 → 显示 Master Password 输入
+Face ID 成功 → 从 Keychain 加载加密密钥 → 解锁 App
+Face ID 失败或跳过 → 显示 Master Password 输入
     ↓
-Master Password 验证成功 → 解锁 App
-验证失败 → 显示错误，重试
+Master Password 验证成功 → 加载加密密钥 → 解锁 App
+Master Password 验证失败 → 显示错误，重试
 ```
 
 ### 4.3 iCloud 同步
 
 - 使用 **SwiftData + CloudKit** 原生集成
-- Apple 的 CloudKit 提供端到端加密
+- CloudKit 在传输层和服务器端提供加密（AES-256），Apple 作为信任方持有密钥
+- SwiftData 将数据序列化后通过 CloudKit 同步，敏感字段已在本地用 AES-GCM 加密（见 4.1），CloudKit 同步的是加密后的数据块
+- 同步冲突策略：**最后写入优先**（Last-Write-Wins），基于 `modifiedAt` 时间戳
 - 用户登录同一 Apple ID 即可在不同设备间自动同步
 - 离线时本地操作，恢复网络后自动合并
 
