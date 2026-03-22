@@ -1,4 +1,6 @@
 import Foundation
+import Combine
+import CryptoKit
 import LocalAuthentication
 
 enum AuthenticationError: Error {
@@ -90,20 +92,20 @@ final class AuthenticationService: ObservableObject {
     }
 
     // Authenticate with Master Password
-    func authenticateWithPassword(_ password: String) throws {
+    func authenticateWithPassword(_ password: String) async throws {
         guard !password.isEmpty else {
             throw AuthenticationError.authenticationFailed
         }
 
         if KeychainService.shared.hasEncryptionKey() {
             // Retrieve stored salt and verification hash
-            guard let salt = KeychainService.shared.retrieveSalt(),
-                  let storedHash = KeychainService.shared.retrievePasswordHash() else {
+            guard let salt = try KeychainService.shared.retrieveSalt(),
+                  let storedHash = try KeychainService.shared.retrievePasswordHash() else {
                 throw AuthenticationError.authenticationFailed
             }
 
             // Derive key from entered password and compare hash
-            let derivedKey = EncryptionService.shared.deriveKey(from: password, salt: salt)
+            let derivedKey = try EncryptionService.shared.deriveKey(from: password, salt: salt)
             let derivedKeyData = derivedKey.withUnsafeBytes { Data($0) }
             let derivedHash = EncryptionService.shared.hashKey(derivedKeyData)
 
@@ -127,7 +129,7 @@ final class AuthenticationService: ObservableObject {
 
     func setupMasterPassword(_ password: String) throws {
         let salt = EncryptionService.shared.generateSalt()
-        let derivedKey = EncryptionService.shared.deriveKey(from: password, salt: salt)
+        let derivedKey = try EncryptionService.shared.deriveKey(from: password, salt: salt)
         let derivedKeyData = derivedKey.withUnsafeBytes { Data($0) }
         let verificationHash = EncryptionService.shared.hashKey(derivedKeyData)
 
