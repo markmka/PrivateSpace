@@ -36,15 +36,20 @@ struct ItemEditView: View {
                             .foregroundColor(.secondary)
                             .padding(.horizontal, AppSpacing.standardPadding)
 
-                        VStack(spacing: 12) {
-                            ForEach(viewModel.fields.indices, id: \.self) { index in
+                        List {
+                            ForEach(viewModel.fields) { field in
                                 FieldEditorRow(
-                                    field: $viewModel.fields[index],
-                                    onDelete: { viewModel.removeField(at: index) },
+                                    field: fieldBinding(for: field),
+                                    onDelete: {
+                                        if let index = viewModel.fields.firstIndex(where: { $0.id == field.id }) {
+                                            viewModel.removeField(at: index)
+                                        }
+                                    },
                                     canDelete: viewModel.fields.count > 1
                                 )
                             }
                         }
+                        .listStyle(.plain)
                         .padding(.horizontal, AppSpacing.standardPadding)
 
                         Button {
@@ -86,6 +91,17 @@ struct ItemEditView: View {
                 }
             }
         }
+    }
+
+    private func fieldBinding(for field: EditableField) -> Binding<EditableField> {
+        Binding(
+            get: { viewModel.fields.first(where: { $0.id == field.id }) ?? field },
+            set: { newValue in
+                if let index = viewModel.fields.firstIndex(where: { $0.id == field.id }) {
+                    viewModel.fields[index] = newValue
+                }
+            }
+        )
     }
 }
 
