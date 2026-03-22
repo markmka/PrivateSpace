@@ -2553,18 +2553,45 @@ struct MasterPasswordView: View {
             return
         }
 
-        // Derive new key from new password
+        // Load OLD key so we can decrypt existing data
+        EncryptionService.shared.loadKey(currentKeyData)
+
+        // Fetch all items and re-encrypt their sensitive fields
+        let items = try? modelContext.fetch(VaultItem.self)
+        for item in items ?? [] {
+            for field in item.fields where field.isSecret && field.encryptedValue != nil {
+                // Decrypt with old key
+                let plaintext = try? EncryptionService.shared.decryptField(data: field.encryptedValue!)
+                guard let value = plaintext else { continue }
+
+                // Update to empty before re-encrypting
+                field.encryptedValue = nil
+                field.value = value
+            }
+        }
+
+        // Now derive new key and re-encrypt
         let newSalt = EncryptionService.shared.generateSalt()
         let newDerivedKey = EncryptionService.shared.deriveKey(from: newPassword, salt: newSalt)
         let newKeyData = newDerivedKey.withUnsafeBytes { Data($0) }
         let newHash = EncryptionService.shared.hashKey(newKeyData)
+
+        // Re-encrypt all sensitive fields with new key and save
+        for item in items ?? [] {
+            for field in item.fields where field.isSecret && !field.value.isEmpty {
+                // Encrypt with new key
+                field.encryptedValue = try? EncryptionService.shared.encryptField(value: field.value)
+                field.value = "" // Clear plaintext
+                item.modifiedAt = Date()
+            }
+        }
 
         // Update Keychain with new salt, hash, and key
         try? KeychainService.shared.storeSalt(newSalt)
         try? KeychainService.shared.storePasswordHash(newHash)
         try? KeychainService.shared.storeEncryptionKey(newKeyData)
 
-        // Load new key for re-encryption
+        // Load new key
         EncryptionService.shared.loadKey(newKeyData)
 
         showingSuccess = true
@@ -2974,22 +3001,9 @@ git commit -m "feat: Add CloudKit sync status monitoring"
 5. Settings with auto-lock
 6. Custom type management
 7. Clipboard auto-clear
-8. Password change with re-encryption
+8. Password change with re-encryption (Phase 2)
 
----
-
-## Summary
-
-**Core tasks completed:**
-1. SwiftData models with CloudKit sync
-2. Keychain + Encryption services
-3. Face ID + Master Password authentication
-4. Unlock, Setup, MainList, ItemDetail, ItemEdit views
-5. Settings with auto-lock
-6. Custom type management
-7. Clipboard auto-clear
-
-**Next steps for Phase 3:**
+**Phase 3 tasks:**
 - iOS Password AutoFill extension
 - Sync status UI improvements
 - Biometrics enable/disable toggle wiring
