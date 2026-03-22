@@ -14,6 +14,10 @@ final class EncryptionService {
 
     private var symmetricKey: SymmetricKey?
 
+    var hasKey: Bool {
+        symmetricKey != nil
+    }
+
     private init() {}
 
     // Derive 256-bit key from Master Password using PBKDF2-HMAC-SHA256
@@ -115,5 +119,20 @@ final class EncryptionService {
     func hashKey(_ key: Data) -> Data {
         let hash = SHA256.hash(data: key)
         return Data(hash)
+    }
+
+    // Verify encryption is working (used for testing)
+    func verifyEncryption() -> Bool {
+        guard let testKey = symmetricKey else { return false }
+        let testData = "test".data(using: .utf8)!
+        do {
+            let sealedBox = try AES.GCM.seal(testData, using: testKey)
+            guard let combined = sealedBox.combined else { return false }
+            let unsealedBox = try AES.GCM.SealedBox(combined: combined)
+            let decryptedData = try AES.GCM.open(unsealedBox, using: testKey)
+            return decryptedData == testData
+        } catch {
+            return false
+        }
     }
 }

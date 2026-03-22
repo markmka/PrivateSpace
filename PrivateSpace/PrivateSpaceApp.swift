@@ -3,6 +3,9 @@ import SwiftData
 
 @main
 struct PrivateSpaceApp: App {
+    @StateObject private var appState = AppState()
+    @Environment(\.scenePhase) private var scenePhase
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             VaultItem.self,
@@ -24,6 +27,12 @@ struct PrivateSpaceApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(appState)
+                .onChange(of: scenePhase) { oldPhase, newPhase in
+                    if newPhase == .background {
+                        appState.lock()
+                    }
+                }
         }
         .modelContainer(sharedModelContainer)
     }
