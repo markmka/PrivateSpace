@@ -7,7 +7,7 @@ final class VaultItem {
     var type: ItemType
     var title: String
     @Relationship(deleteRule: .cascade) var fields: [CustomField]
-    var customType: CustomItemType?
+    @Relationship(deleteRule: .nullify) var customType: CustomItemType?
     var createdAt: Date
     var modifiedAt: Date
 

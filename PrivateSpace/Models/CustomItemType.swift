@@ -26,8 +26,11 @@ final class CustomItemType {
             (try? JSONDecoder().decode([PresetField].self, from: presetFieldsData)) ?? []
         }
         set {
-            guard let encoded = try? JSONEncoder().encode(newValue) else { return }
-            presetFieldsData = encoded
+            do {
+                presetFieldsData = try JSONEncoder().encode(newValue)
+            } catch {
+                assertionFailure("Failed to encode presetFields: \(error)")
+            }
         }
     }
 
