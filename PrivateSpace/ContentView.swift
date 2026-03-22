@@ -17,7 +17,9 @@ struct ContentView: View {
             } else if appState.isLocked {
                 UnlockView()
             } else {
-                MainListView()
+                NavigationStack {
+                    MainListView()
+                }
             }
         }
     }
