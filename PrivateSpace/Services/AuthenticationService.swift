@@ -54,8 +54,16 @@ final class AuthenticationService: ObservableObject {
         }
     }
 
+    var isBiometricsEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "biometricsEnabled")
+    }
+
     // Authenticate with Face ID/Touch ID
     func authenticateWithBiometrics() async throws {
+        guard isBiometricsEnabled else {
+            throw AuthenticationError.biometryNotAvailable
+        }
+
         let context = LAContext()
         context.localizedCancelTitle = "使用密码"
 

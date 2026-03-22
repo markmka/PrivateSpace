@@ -39,6 +39,7 @@ final class SetupViewModel: ObservableObject {
 
         do {
             try authService.setupMasterPassword(password)
+            UserDefaults.standard.set(enableBiometrics, forKey: "biometricsEnabled")
             isLoading = false
         } catch {
             errorMessage = "设置失败，请重试"

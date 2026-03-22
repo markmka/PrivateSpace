@@ -94,7 +94,7 @@ struct SetupView: View {
                         .background(AppColors.primary)
                         .clipShape(RoundedRectangle(cornerRadius: AppSpacing.buttonCornerRadius))
                     }
-                    .disabled(viewModel.isLoading || viewModel.password.isEmpty)
+                    .disabled(viewModel.isLoading || viewModel.password.isEmpty || viewModel.confirmPassword.isEmpty)
                     .padding(.horizontal, 32)
 
                     Spacer()
