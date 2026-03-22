@@ -1,4 +1,5 @@
 import SwiftUI
+import CryptoKit
 
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
@@ -165,7 +166,10 @@ struct MasterPasswordView: View {
             return
         }
 
-        let currentDerivedKey = EncryptionService.shared.deriveKey(from: currentPassword, salt: salt)
+        guard let currentDerivedKey = try? EncryptionService.shared.deriveKey(from: currentPassword, salt: salt) else {
+            errorMessage = "无法派生密钥"
+            return
+        }
         let currentKeyData = currentDerivedKey.withUnsafeBytes { Data($0) }
         let currentHash = EncryptionService.shared.hashKey(currentKeyData)
 
@@ -182,7 +186,10 @@ struct MasterPasswordView: View {
 
         // Update Keychain
         let newSalt = EncryptionService.shared.generateSalt()
-        let newDerivedKey = EncryptionService.shared.deriveKey(from: newPassword, salt: newSalt)
+        guard let newDerivedKey = try? EncryptionService.shared.deriveKey(from: newPassword, salt: newSalt) else {
+            errorMessage = "无法派生新密钥"
+            return
+        }
         let newKeyData = newDerivedKey.withUnsafeBytes { Data($0) }
         let newHash = EncryptionService.shared.hashKey(newKeyData)
 
