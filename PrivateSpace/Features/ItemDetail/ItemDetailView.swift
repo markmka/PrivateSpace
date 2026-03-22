@@ -4,7 +4,7 @@ import SwiftData
 struct ItemDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var item: VaultItem
+    @Bindable var item: VaultItem
     @StateObject private var viewModel = ItemDetailViewModel()
     @State private var showingDeleteAlert = false
 
