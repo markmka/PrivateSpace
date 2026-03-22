@@ -8,6 +8,7 @@ final class UnlockViewModel: ObservableObject {
     @Published var isLoading: Bool = false
 
     private let authService = AuthenticationService.shared
+    private var authenticationTask: Task<Void, Never>?
 
     var isBiometryAvailable: Bool {
         authService.isBiometryAvailable
@@ -15,6 +16,14 @@ final class UnlockViewModel: ObservableObject {
 
     var biometryName: String {
         authService.biometryName
+    }
+
+    var biometryIconName: String {
+        authService.biometryIconName
+    }
+
+    var biometryType: LABiometryType {
+        authService.biometryType
     }
 
     func authenticateWithBiometrics() async {
@@ -38,7 +47,7 @@ final class UnlockViewModel: ObservableObject {
             return
         }
 
-        Task {
+        authenticationTask = Task {
             await authenticateWithPasswordAsync()
         }
     }

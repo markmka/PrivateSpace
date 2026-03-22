@@ -38,10 +38,19 @@ final class AuthenticationService: ObservableObject {
 
     var biometryName: String {
         switch biometryType {
-        case .faceID: return "Face ID"
-        case .touchID: return "Touch ID"
+        case .faceID: return "面容 ID"
+        case .touchID: return "触控 ID"
         case .opticID: return "Optic ID"
         default: return "生物识别"
+        }
+    }
+
+    var biometryIconName: String {
+        switch biometryType {
+        case .faceID: return "faceid"
+        case .touchID: return "touchid"
+        case .opticID: return "opticid"
+        default: return "lock.fill"
         }
     }
 

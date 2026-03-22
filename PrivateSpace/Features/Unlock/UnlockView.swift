@@ -37,7 +37,7 @@ struct UnlockView: View {
                         }
                     } label: {
                         HStack {
-                            Image(systemName: "faceid")
+                            Image(systemName: viewModel.biometryIconName)
                             Text("使用 \(viewModel.biometryName) 解锁")
                         }
                         .font(.headline)
