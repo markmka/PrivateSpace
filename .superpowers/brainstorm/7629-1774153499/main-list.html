@@ -1,0 +1,123 @@
+<h2>主列表页 — Vault</h2>
+<p class="subtitle">紧凑列表 + 右下角 FAB 展开创建入口</p>
+
+<div class="mockup">
+  <div class="mockup-header">iOS 设备预览</div>
+  <div class="mockup-body" style="background:#F2F2F7;padding:20px;border-radius:12px;">
+
+    <!-- Status Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span style="font-size:12px;color:#000;">9:41</span>
+      <span style="font-size:12px;color:#000;">📶 📡 🔋</span>
+    </div>
+
+    <!-- Nav Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <span style="font-size:18px;font-weight:600;color:#000;">Vault</span>
+      <div style="display:flex;gap:16px;">
+        <span style="font-size:16px;">🔍</span>
+        <span style="font-size:16px;">⚙️</span>
+      </div>
+    </div>
+
+    <!-- Filter Pills -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;">
+      <div style="background:#007AFF;padding:6px 14px;border-radius:16px;font-size:13px;color:#fff;white-space:nowrap;">全部</div>
+      <div style="background:#fff;padding:6px 14px;border-radius:16px;font-size:13px;color:#000;white-space:nowrap;">🔑 密码</div>
+      <div style="background:#fff;padding:6px 14px;border-radius:16px;font-size:13px;color:#000;white-space:nowrap;">🔐 私钥</div>
+      <div style="background:#fff;padding:6px 14px;border-radius:16px;font-size:13px;color:#000;white-space:nowrap;">📝 笔记</div>
+      <div style="background:#fff;padding:6px 14px;border-radius:16px;font-size:13px;color:#000;white-space:nowrap;">📎 其他</div>
+    </div>
+
+    <!-- List Items -->
+    <div style="background:#fff;border-radius:12px;overflow:hidden;">
+
+      <!-- Item 1 -->
+      <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid #E5E5EA;">
+        <div style="width:40px;height:40px;background:#007AFF20;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;">
+          <span style="font-size:18px;">🔑</span>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:500;color:#000;">Google 账号</div>
+          <div style="font-size:13px;color:#8E8E93;margin-top:2px;">user@gmail.com</div>
+        </div>
+        <span style="color:#8E8E93;font-size:14px;">›</span>
+      </div>
+
+      <!-- Item 2 -->
+      <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid #E5E5EA;">
+        <div style="width:40px;height:40px;background:#34C75920;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;">
+          <span style="font-size:18px;">🔐</span>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:500;color:#000;">Bitcoin Wallet</div>
+          <div style="font-size:13px;color:#8E8E93;margin-top:2px;">私钥 ●●●●●●</div>
+        </div>
+        <span style="color:#8E8E93;font-size:14px;">›</span>
+      </div>
+
+      <!-- Item 3 -->
+      <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid #E5E5EA;">
+        <div style="width:40px;height:40px;background:#FF950020;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;">
+          <span style="font-size:18px;">📝</span>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:500;color:#000;">Wi-Fi 密码</div>
+          <div style="font-size:13px;color:#8E8E93;margin-top:2px;">Home Network</div>
+        </div>
+        <span style="color:#8E8E93;font-size:14px;">›</span>
+      </div>
+
+      <!-- Item 4 -->
+      <div style="display:flex;align-items:center;padding:14px 16px;">
+        <div style="width:40px;height:40px;background:#FF2D5520;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;">
+          <span style="font-size:18px;">📎</span>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:500;color:#000;">API Keys</div>
+          <div style="font-size:13px;color:#8E8E93;margin-top:2px;">Stripe, AWS, OpenAI</div>
+        </div>
+        <span style="color:#8E8E93;font-size:14px;">›</span>
+      </div>
+
+    </div>
+
+    <!-- FAB Button -->
+    <div style="position:fixed;bottom:100px;right:24px;width:56px;height:56px;background:#007AFF;border-radius:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+      <span style="color:#fff;font-size:24px;font-weight:300;">+</span>
+    </div>
+
+  </div>
+</div>
+
+<h3 style="margin-top:24px;">界面说明</h3>
+<div class="section">
+  <p><strong>① 顶部导航栏</strong> — App Logo + 搜索 + 设置入口</p>
+  <p><strong>② 类型筛选条</strong> — 横向滚动的筛选标签，默认"全部"</p>
+  <p><strong>③ 条目列表</strong> — 紧凑行：图标 + 标题 + 摘要，按类型用不同颜色区分</p>
+  <p><strong>④ FAB 按钮</strong> — 右下角圆形蓝按钮，点击展开创建选项</p>
+</div>
+
+<div class="options" style="margin-top:24px;">
+  <div class="option" data-choice="fab" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>FAB 展开后效果</h3>
+      <p>点击查看 FAB 展开的创建选项</p>
+    </div>
+  </div>
+  <div class="option" data-choice="detail" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>条目详情页</h3>
+      <p>查看条目详情页的布局设计</p>
+    </div>
+  </div>
+  <div class="option" data-choice="approved" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>设计符合预期</h3>
+      <p>继续下一个部分</p>
+    </div>
+  </div>
+</div>

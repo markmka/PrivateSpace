@@ -1,0 +1,126 @@
+<h2>条目详情页</h2>
+<p class="subtitle">密码类型条目示例，字段值默认隐藏</p>
+
+<div class="mockup">
+  <div class="mockup-header">iOS 设备预览</div>
+  <div class="mockup-body" style="background:#F2F2F7;padding:20px;border-radius:12px;">
+
+    <!-- Status Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span style="font-size:12px;color:#000;">9:41</span>
+      <span style="font-size:12px;color:#000;">📶 📡 🔋</span>
+    </div>
+
+    <!-- Nav Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;color:#007AFF;">←</span>
+        <span style="font-size:17px;color:#007AFF;">返回</span>
+      </div>
+      <div style="display:flex;gap:16px;">
+        <span style="font-size:16px;">✏️</span>
+        <span style="font-size:16px;">🗑️</span>
+      </div>
+    </div>
+
+    <!-- Header Card -->
+    <div style="background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+      <div style="display:flex;align-items:center;margin-bottom:12px;">
+        <div style="width:56px;height:56px;background:#007AFF20;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-right:16px;">
+          <span style="font-size:24px;">🔑</span>
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:600;color:#000;">Google 账号</div>
+          <div style="font-size:14px;color:#8E8E93;margin-top:2px;">密码 · 3 个字段</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fields Section -->
+    <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+
+      <!-- Website -->
+      <div style="padding:16px 20px;border-bottom:1px solid #E5E5EA;">
+        <div style="font-size:13px;color:#8E8E93;margin-bottom:6px;">网站</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:16px;color:#000;">https://accounts.google.com</span>
+          <div style="display:flex;gap:12px;">
+            <span style="font-size:14px;color:#007AFF;">🌐</span>
+            <span style="font-size:14px;color:#007AFF;">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Username -->
+      <div style="padding:16px 20px;border-bottom:1px solid #E5E5EA;">
+        <div style="font-size:13px;color:#8E8E93;margin-bottom:6px;">用户名</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:16px;color:#000;">user@gmail.com</span>
+          <div style="display:flex;gap:12px;">
+            <span style="font-size:14px;color:#007AFF;">📋</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password (Secret) -->
+      <div style="padding:16px 20px;border-bottom:1px solid #E5E5EA;">
+        <div style="font-size:13px;color:#8E8E93;margin-bottom:6px;">密码</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:16px;color:#000;letter-spacing:2px;">••••••••••••</span>
+            <span style="font-size:14px;color:#007AFF;">👁</span>
+          </div>
+          <div style="display:flex;gap:12px;">
+            <span style="font-size:14px;color:#007AFF;">📋</span>
+          </div>
+        </div>
+        <div style="margin-top:8px;background:#34C75910;border-radius:6px;padding:6px 10px;display:inline-block;">
+          <span style="font-size:12px;color:#34C759;">✓ 密码已复制，30秒后清除</span>
+        </div>
+      </div>
+
+      <!-- Note (Optional Field) -->
+      <div style="padding:16px 20px;">
+        <div style="font-size:13px;color:#8E8E93;margin-bottom:6px;">备注</div>
+        <span style="font-size:15px;color:#8E8E93;">无备注</span>
+      </div>
+
+    </div>
+
+    <!-- Bottom Safe Area -->
+    <div style="height:40px;"></div>
+
+  </div>
+</div>
+
+<h3 style="margin-top:24px;">界面说明</h3>
+<div class="section">
+  <p><strong>① 导航栏</strong> — 返回按钮 + 编辑/删除操作</p>
+  <p><strong>② 头部卡片</strong> — 条目标题 + 类型图标 + 字段数量</p>
+  <p><strong>③ 字段列表</strong> — 每行：字段名 + 字段值 + 操作按钮</p>
+  <p><strong>④ 敏感字段</strong> — 密码默认隐藏（点眼睛图标显示），复制后显示 30 秒清除提示</p>
+</div>
+
+<div class="options" style="margin-top:24px;">
+  <div class="option" data-choice="fab" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>FAB 展开创建选项</h3>
+      <p>查看 FAB 点击后的创建类型选择</p>
+    </div>
+  </div>
+  <div class="option" data-choice="unlock" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>解锁页设计</h3>
+      <p>查看 Face ID / 主密码解锁页面</p>
+    </div>
+  </div>
+  <div class="option" data-choice="approved" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>设计符合预期</h3>
+      <p>继续下一个部分</p>
+    </div>
+  </div>
+</div>

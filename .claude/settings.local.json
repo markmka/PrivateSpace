@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/bot/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.5/skills/brainstorming/scripts/start-server.sh --project-dir /Users/bot/projects/PrivateSpace 2>&1)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(/Users/bot/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.5/skills/brainstorming/scripts/stop-server.sh /Users/bot/projects/PrivateSpace/.superpowers/brainstorm/7629-1774153499)",
+      "Bash(git worktree:*)",
+      "Bash(xcodebuild -project PrivateSpace.xcodeproj -scheme PrivateSpace -configuration Debug -destination 'platform=iOS Simulator,name=iPhone' build)",
+      "Bash(xcodebuild -project PrivateSpace.xcodeproj -scheme PrivateSpace -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17' build)",
+      "Bash(xcodebuild -project PrivateSpace.xcodeproj -scheme PrivateSpace -configuration Debug -destination 'platform=macOS' build)",
+      "Bash(xxd)",
+      "Bash(xcodebuild -project PrivateSpace.xcodeproj -scheme PrivateSpace -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build)",
+      "Bash(git:*)",
+      "Bash(xcodebuild -project PrivateSpace.xcodeproj -scheme PrivateSpace -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17' clean)"
+    ]
+  }
+}

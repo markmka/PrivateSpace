@@ -1,0 +1,121 @@
+<h2>FAB 展开创建选项</h2>
+<p class="subtitle">点击右下角 FAB 展开类型选择</p>
+
+<div class="mockup">
+  <div class="mockup-header">iOS 设备预览</div>
+  <div class="mockup-body" style="background:#F2F2F7;padding:20px;border-radius:12px;position:relative;min-height:500px;">
+
+    <!-- Status Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span style="font-size:12px;color:#000;">9:41</span>
+      <span style="font-size:12px;color:#000;">📶 📡 🔋</span>
+    </div>
+
+    <!-- Nav Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <span style="font-size:18px;font-weight:600;color:#000;">Vault</span>
+      <div style="display:flex;gap:16px;">
+        <span style="font-size:16px;">🔍</span>
+        <span style="font-size:16px;">⚙️</span>
+      </div>
+    </div>
+
+    <!-- Dimmed Background -->
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);border-radius:12px;z-index:1;"></div>
+
+    <!-- FAB Expand Menu -->
+    <div style="position:absolute;bottom:100px;right:24px;z-index:2;">
+
+      <!-- Action Buttons (revealed when expanded) -->
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px;margin-bottom:16px;">
+
+        <!-- Other -->
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="background:#fff;padding:8px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+            <span style="font-size:14px;color:#000;">📎 其他</span>
+          </div>
+          <div style="width:44px;height:44px;background:#FF9500;border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <span style="color:#fff;font-size:18px;">📎</span>
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="background:#fff;padding:8px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+            <span style="font-size:14px;color:#000;">📝 安全笔记</span>
+          </div>
+          <div style="width:44px;height:44px;background:#FF2D55;border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <span style="color:#fff;font-size:18px;">📝</span>
+          </div>
+        </div>
+
+        <!-- Private Key -->
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="background:#fff;padding:8px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+            <span style="font-size:14px;color:#000;">🔐 私钥</span>
+          </div>
+          <div style="width:44px;height:44px;background:#34C759;border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <span style="color:#fff;font-size:18px;">🔐</span>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="background:#fff;padding:8px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+            <span style="font-size:14px;color:#000;">🔑 密码</span>
+          </div>
+          <div style="width:44px;height:44px;background:#007AFF;border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <span style="color:#fff;font-size:18px;">🔑</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Close FAB -->
+      <div style="width:56px;height:56px;background:#8E8E93;border-radius:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);transform:rotate(45deg);">
+        <span style="color:#fff;font-size:24px;font-weight:300;">+</span>
+      </div>
+
+    </div>
+
+    <!-- Label -->
+    <div style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:2;">
+      <div style="background:rgba(0,0,0,0.7);padding:8px 16px;border-radius:20px;">
+        <span style="color:#fff;font-size:13px;">点击任意位置关闭</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<h3 style="margin-top:24px;">交互说明</h3>
+<div class="section">
+  <p><strong>① 展开动画</strong> — FAB 图标旋转 45° 变为 ×，菜单项从下往上依次出现</p>
+  <p><strong>② 类型选项</strong> — 密码、🔐私钥、📝安全笔记、📎其他</p>
+  <p><strong>③ 用户自定义类型</strong> — 也将显示在此菜单中</p>
+  <p><strong>④ 关闭方式</strong> — 点击背景或再次点击 FAB</p>
+</div>
+
+<div class="options" style="margin-top:24px;">
+  <div class="option" data-choice="settings" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>设置页</h3>
+      <p>查看设置页面布局</p>
+    </div>
+  </div>
+  <div class="option" data-choice="custom-type" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>自定义类型创建</h3>
+      <p>查看用户如何创建自定义类型</p>
+    </div>
+  </div>
+  <div class="option" data-choice="approved" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>设计符合预期</h3>
+      <p>继续下一个部分</p>
+    </div>
+  </div>
+</div>
